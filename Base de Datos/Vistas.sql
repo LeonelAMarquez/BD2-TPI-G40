@@ -1,26 +1,38 @@
 USE SistemaPedidos
 GO
 
--- Vista del cálculo automático del total de cada pedido
-
-CREATE VIEW vw_PedidosTotales AS
+CREATE VIEW vw_ResumenGeneralPedidos AS
 SELECT 
-    p.id_pedido,
-    p.id_cliente,
-    SUM(dp.subtotal) AS total_calculado
+    p.id_pedido AS CodigoPedido,
+    CONCAT(c.nombre, ' ', c.apellido) AS NombreCompletoCliente,
+    c.email AS CorreoCliente,
+    p.estado AS EstadoActualPedido,
+    p.fecha_pedido AS FechaCreacionPedido,
+    COUNT(dp.id_producto) AS CantidadProductos,
+    SUM(dp.cantidad) AS UnidadesTotales,
+    SUM(dp.subtotal) AS MontoTotalCalculado,
+    ISNULL(SUM(pg.monto), 0) AS MontoTotalPagado,
+    (SUM(dp.subtotal) - ISNULL(SUM(pg.monto), 0)) AS SaldoPendiente,
+    MAX(pg.fecha_pago) AS UltimoPagoRegistrado,
+    MAX(l.fecha_envio) AS FechaUltimoEnvio,
+    MAX(l.estado_envio) AS EstadoLogistico,
+    MAX(l.empresa_transporte) AS EmpresaTransporte
 FROM Pedido p
-JOIN DetalleDelPedido dp ON p.id_pedido = dp.id_pedido
-GROUP BY p.id_pedido, p.id_cliente;
+INNER JOIN Cliente c 
+    ON p.id_cliente = c.id_cliente
+INNER JOIN DetalleDelPedido dp 
+    ON p.id_pedido = dp.id_pedido
+LEFT JOIN Pagos pg 
+    ON p.id_pedido = pg.id_pedido
+LEFT JOIN Logistica l 
+    ON p.id_pedido = l.id_pedido
+GROUP BY 
+    p.id_pedido, 
+    CONCAT(c.nombre, ' ', c.apellido), 
+    c.email, 
+    p.estado, 
+    p.fecha_pedido;
 GO
-
---vista productos con stock:
-CREATE VIEW vw_ProductosConStock
-AS
-SELECT PR.nombre_proveedor AS Proveedor, P.nombre AS Cliente, P.precio, S.cantidad FROM Proveedor PR
-INNER JOIN Producto P ON PR.id_proveedor = P.id_proveedor
-INNER JOIN Stock S ON P.id_producto = S.id_producto
-WHERE S.cantidad >= 0;
-go
 
 --vista pedidos clientes:
 CREATE VIEW vw_PedidosCliente
