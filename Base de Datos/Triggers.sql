@@ -70,3 +70,17 @@ BEGIN
     JOIN inserted i ON p.id_pedido = i.id_pedido;
 END;
 GO
+-- Trigger  Cancelar pedidos del cliente eliminado
+CREATE TRIGGER TRG_Cliente_Delete_CancelPedidos
+ON Cliente
+AFTER DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE Pedido
+    SET estado = 'Cancelado'
+    WHERE id_cliente IN (SELECT id_cliente FROM deleted);
+END;
+GO
+
