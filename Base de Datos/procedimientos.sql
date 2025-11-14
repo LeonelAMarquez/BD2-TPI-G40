@@ -1,49 +1,23 @@
 USE SistemaPedidos
 GO
 
---procedimiento almacenado registrar pago
-CREATE PROCEDURE sp_RegistrarPago(
-	@id_pedido INT,
-	@monto DECIMAL(10,2),
-	@metodo_pago NVARCHAR(50)
+CREATE PROCEDURE sp_ReporteProeedorDetalle(
+    @id_proveedor INT
 )
 AS
 BEGIN
-	
-	BEGIN TRY
-		BEGIN TRANSACTION;
-			-- 1. Validacion de si el pedido existe
-			IF NOT EXISTS (SELECT 1 FROM Pedido WHERE id_pedido = @id_pedido)
-				RETURN;
-
-		    -- 2. Insert del pago
-			INSERT INTO Pagos(id_pedido, monto, fecha_pago, metodo_pago)
-			VALUES(@id_pedido, @monto, GETDATE(), @metodo_pago);
-
-			-- 3. Consultar total del pedido
-			DECLARE @totalPedido DECIMAL(12,2);
-			DECLARE @totalPagado DECIMAL(12,2);
-
-			SELECT @totalPedido = total FROM Pedido WHERE id_pedido = @id_pedido;
-			SELECT @totalPagado = SUM(monto) FROM Pagos WHERE id_pedido = @id_pedido;
-
-			-- 4. Actualizacio del estado
-			IF @totalPagado >= @totalPedido
-			BEGIN
-				UPDATE Pedido SET estado = 'Entregado' WHERE id_pedido = @id_pedido;	
-			END
-			ELSE BEGIN
-				UPDATE Pedido SET estado = 'Procesando' WHERE id_pedido = @id_pedido;
-			END;
-
-		COMMIT TRANSACTION;
-	END TRY
-
-	BEGIN CATCH
-		ROLLBACK TRANSACTION;
-		RAISERROR('NO SE PUDO REGITRAR EL PAGO.', 16, 1);
-	END CATCH;
-
+    SELECT PR.nombre_Proveedor,
+           P.id_producto,
+           P.nombre AS Producto,
+           S.cantidad AS stock_actual,
+           ISNULL(SUM(DP.cantidad), 0) AS Unidades_vendidas,
+           ISNULL(SUM(DP.subtotal), 0) AS total_facturado
+    FROM Proveedor PR
+    INNER JOIN Producto P ON PR.id_proveedor = P.id_proveedor
+    LEFT JOIN Stock S ON P.id_producto = S.id_producto
+    LEFT JOIN DetalleDelPedido DP ON P.id_producto = DP.id_producto
+    WHERE PR.id_proveedor = @id_proveedor
+    GROUP BY PR.nombre_proveedor, P.id_producto, P.nombre, S.cantidad;
 END;
 go
 

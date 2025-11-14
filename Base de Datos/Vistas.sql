@@ -34,13 +34,6 @@ GROUP BY
     p.fecha_pedido;
 GO
 
---vista pedidos clientes:
-CREATE VIEW vw_PedidosCliente
-AS
-SELECT C.nombre + ' ' + C.apellido AS Cliente, PE.fecha_pedido, PE.estado, PE.total FROM Cliente C
-INNER JOIN Pedido PE ON C.id_cliente = PE.id_cliente;
-go
-
 --Vista de inventario con información completa
 CREATE VIEW VW_InventarioCompleto AS
 SELECT 
@@ -137,3 +130,38 @@ WHERE p.fecha_pedido >= DATEADD(DAY, -30, GETDATE())
 GROUP BY pr.id_producto, pr.nombre
 ORDER BY total_vendido DESC;
 GO
+
+--vista ventas por ciudad:
+CREATE VIEW vw_VentasPorCiudad
+AS
+SELECT 
+    C.ciudad,
+    COUNT(DISTINCT P.id_pedido) AS total_pedidos,
+    COUNT(DISTINCT C.id_cliente) AS total_clientes,
+    SUM(DP.subtotal) AS total_ventas
+FROM Cliente C
+INNER JOIN Pedido P ON C.id_cliente = P.id_cliente
+INNER JOIN DetalleDelPedido DP ON P.id_pedido = DP.id_pedido
+GROUP BY C.ciudad;
+go
+
+--vista de productos sin movimiento
+CREATE VIEW vw_ProductosSinMovimiento
+AS
+SELECT
+    P.id_producto,
+    P.nombre,
+    MAX(PE.fecha_pedido) AS fecha_ultima_venta,
+    DATEDIFF(
+        DAY,
+        MAX(PE.fecha_pedido),
+        GETDATE()
+    ) AS dias_sin_movimiento
+FROM Producto P
+LEFT JOIN DetalleDelPedido DP ON P.id_producto = DP.id_producto
+LEFT JOIN Pedido PE ON DP.id_pedido = PE.id_pedido
+GROUP BY P.id_producto, P.nombre
+HAVING 
+    MAX(PE.fecha_pedido) IS NULL
+    OR MAX(PE.fecha_pedido) < DATEADD(DAY, -60, GETDATE());
+go
