@@ -161,7 +161,7 @@ END;
 GO
 
 -- Procedimiento para actualizar el precio de algun producto
-CREATE PROCEDURE sp_ActualizarPrecioProducto
+CREATE PROCEDURE ActualizarPrecioProducto
     @id_producto INT,
     @nuevo_precio DECIMAL(10,2)
 AS
@@ -181,7 +181,7 @@ END;
 GO
 
 -- Procedimiento para registrar el envio de un producto
-CREATE PROCEDURE sp_RegistrarEnvio
+CREATE PROCEDURE RegistrarEnvio
     @id_pedido INT,
     @empresa NVARCHAR(100),
     @numero_guia NVARCHAR(50)

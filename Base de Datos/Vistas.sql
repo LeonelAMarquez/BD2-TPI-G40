@@ -99,7 +99,7 @@ CREATE TYPE DetallePedidoType AS TABLE (
 GO
 
 -- Muestra a los clientes deudores
-CREATE VIEW vw_ClientesConDeuda AS
+CREATE VIEW ClientesConDeuda AS
 SELECT 
     c.id_cliente,
     CONCAT(c.nombre, ' ', c.apellido) AS cliente,
@@ -118,7 +118,7 @@ HAVING SUM(dp.subtotal) > ISNULL(SUM(pg.monto), 0);
 GO
 
 -- Muestra los productos que mas se vendieron en el ultimo mes(30 dias)
-CREATE VIEW vw_ProductosMasVendidos30Dias AS
+CREATE VIEW ProductosMasVendidos30Dias AS
 SELECT 
     pr.id_producto,
     pr.nombre AS nombre_producto,
