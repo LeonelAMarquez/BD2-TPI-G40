@@ -124,22 +124,16 @@ GROUP BY
 HAVING SUM(dp.subtotal) > ISNULL(SUM(pg.monto), 0);
 GO
 
--- Muestra los productos que no han tenido movimiento en los ultimos 60 dias
-CREATE VIEW vw_ProductosSinMovimiento AS
+-- Muestra los productos que mas se vendieron en el ultimo mes(30 dias)
+CREATE VIEW vw_ProductosMasVendidos30Dias AS
 SELECT 
-    p.id_producto,
-    p.nombre,
-    p.precio,
-    s.cantidad AS stock_actual,
-    MAX(dp.id_pedido) AS ultimo_pedido
-FROM Producto p
-LEFT JOIN DetalleDelPedido dp ON p.id_producto = dp.id_producto
-LEFT JOIN Stock s ON p.id_producto = s.id_producto
-GROUP BY p.id_producto, p.nombre, p.precio, s.cantidad
-HAVING MAX(dp.id_pedido) IS NULL 
-   OR MAX(dp.id_pedido) IN (
-       SELECT id_pedido
-       FROM Pedido
-       WHERE fecha_pedido < DATEADD(DAY, -60, GETDATE())
-   );
+    pr.id_producto,
+    pr.nombre AS nombre_producto,
+    SUM(dp.cantidad) AS total_vendido
+FROM DetalleDelPedido dp
+INNER JOIN Pedido p ON dp.id_pedido = p.id_pedido
+INNER JOIN Producto pr ON dp.id_producto = pr.id_producto
+WHERE p.fecha_pedido >= DATEADD(DAY, -30, GETDATE()) 
+GROUP BY pr.id_producto, pr.nombre
+ORDER BY total_vendido DESC;
 GO
