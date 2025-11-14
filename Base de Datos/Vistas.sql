@@ -40,3 +40,106 @@ AS
 SELECT C.nombre + ' ' + C.apellido AS Cliente, PE.fecha_pedido, PE.estado, PE.total FROM Cliente C
 INNER JOIN Pedido PE ON C.id_cliente = PE.id_cliente;
 go
+
+--Vista de inventario con información completa
+CREATE VIEW VW_InventarioCompleto AS
+SELECT 
+    p.id_producto,
+    p.nombre,
+    p.descripcion,
+    p.precio,
+    s.cantidad,
+    s.fecha_actualizacion,
+    prov.nombre_proveedor,
+    prov.telefono as telefono_proveedor,
+    CASE 
+        WHEN s.cantidad = 0 THEN 'Sin Stock'
+        WHEN s.cantidad < 10 THEN 'Stock Bajo'
+        ELSE 'Stock Normal'
+    END as estado_stock
+FROM Producto p
+INNER JOIN Stock s ON p.id_producto = s.id_producto
+INNER JOIN Proveedor prov ON p.id_proveedor = prov.id_proveedor;
+GO
+
+--Vista de pedidos con informacion completa
+CREATE VIEW VW_PedidosCompletos AS
+SELECT 
+    ped.id_pedido,
+    c.nombre + ' ' + c.apellido as cliente,
+    c.ciudad,
+    ped.fecha_pedido,
+    ped.estado,
+    ped.total,
+    pag.metodo_pago,
+    pag.monto as monto_pagado,
+    log.empresa_transporte,
+    log.estado_envio
+FROM Pedido ped
+INNER JOIN Cliente c ON ped.id_cliente = c.id_cliente
+LEFT JOIN Pagos pag ON ped.id_pedido = pag.id_pedido
+LEFT JOIN Logistica log ON ped.id_pedido = log.id_pedido;
+GO
+
+--Vista de ventas por producto
+CREATE VIEW VW_VentasPorProducto AS
+SELECT 
+    p.id_producto,
+    p.nombre,
+    prov.nombre_proveedor,
+    SUM(det.cantidad) as total_vendido,
+    SUM(det.subtotal) as ingresos_totales,
+    AVG(det.precio_unitario) as precio_promedio
+FROM Producto p
+INNER JOIN DetalleDelPedido det ON p.id_producto = det.id_producto
+INNER JOIN Proveedor prov ON p.id_proveedor = prov.id_proveedor
+INNER JOIN Pedido ped ON det.id_pedido = ped.id_pedido
+WHERE ped.estado != 'Cancelado'
+GROUP BY p.id_producto, p.nombre, prov.nombre_proveedor;
+GO
+
+CREATE TYPE DetallePedidoType AS TABLE (
+    id_producto INT,
+    cantidad INT,
+    precio_unitario DECIMAL(10,2)
+);
+GO
+
+-- Muestra a los clientes deudores
+CREATE VIEW vw_ClientesConDeuda AS
+SELECT 
+    c.id_cliente,
+    CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+    c.email,
+    p.id_pedido,
+    SUM(dp.subtotal) AS total_pedido,
+    ISNULL(SUM(pg.monto), 0) AS total_pagado,
+    (SUM(dp.subtotal) - ISNULL(SUM(pg.monto), 0)) AS saldo_pendiente
+FROM Cliente c
+JOIN Pedido p ON c.id_cliente = p.id_cliente
+JOIN DetalleDelPedido dp ON p.id_pedido = dp.id_pedido
+LEFT JOIN Pagos pg ON p.id_pedido = pg.id_pedido
+GROUP BY 
+    c.id_cliente, c.nombre, c.apellido, c.email, p.id_pedido
+HAVING SUM(dp.subtotal) > ISNULL(SUM(pg.monto), 0);
+GO
+
+-- Muestra los productos que no han tenido movimiento en los ultimos 60 dias
+CREATE VIEW vw_ProductosSinMovimiento AS
+SELECT 
+    p.id_producto,
+    p.nombre,
+    p.precio,
+    s.cantidad AS stock_actual,
+    MAX(dp.id_pedido) AS ultimo_pedido
+FROM Producto p
+LEFT JOIN DetalleDelPedido dp ON p.id_producto = dp.id_producto
+LEFT JOIN Stock s ON p.id_producto = s.id_producto
+GROUP BY p.id_producto, p.nombre, p.precio, s.cantidad
+HAVING MAX(dp.id_pedido) IS NULL 
+   OR MAX(dp.id_pedido) IN (
+       SELECT id_pedido
+       FROM Pedido
+       WHERE fecha_pedido < DATEADD(DAY, -60, GETDATE())
+   );
+GO
