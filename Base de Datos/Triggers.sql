@@ -38,7 +38,7 @@ END;
 GO
 
 -- Trigger que alerta cuando hay un stock bajo del producto
-CREATE TRIGGER TR_AlertarBajoStock
+CREATE TRIGGER AlertarBajoStock
 ON Stock
 AFTER UPDATE
 AS
@@ -49,7 +49,7 @@ BEGIN
         WHERE cantidad < 5
     )
     BEGIN
-        PRINT '⚠ ALERTA: El stock de un producto bajó a menos de 5 unidades.';
+        PRINT 'ALERTA: El stock de un producto bajó a menos de 5 unidades.';
     END
 END;
 GO
