@@ -208,3 +208,11 @@ INSERT INTO DetalleDelPedido (id_pedido, id_producto, cantidad, precio_unitario)
 INSERT INTO DetalleDelPedido (id_pedido, id_producto, cantidad, precio_unitario) VALUES (20, 10, 2, 260.0);
 INSERT INTO Pagos (id_pedido, metodo_pago, monto) VALUES (20, 'Transferencia', 3710);
 INSERT INTO Logistica (id_pedido, empresa_transporte, numero_guia, estado_envio) VALUES (20, 'OCA', 'G00020', 'En proceso');
+
+UPDATE P
+SET total = (
+    SELECT SUM(DP.cantidad * DP.precio_unitario)
+    FROM DetalleDelPedido DP
+    WHERE DP.id_pedido = P.id_pedido
+)
+FROM Pedido P;
