@@ -1,7 +1,7 @@
 USE SistemaPedidos
 GO
 
-CREATE PROCEDURE sp_ReporteProeedorDetalle(
+CREATE PROCEDURE sp_ReporteProveedorDetalle(
     @id_proveedor INT
 )
 AS
@@ -82,34 +82,7 @@ BEGIN
 END;
 GO
 
---Procedure para crear nuevo pedido
-CREATE PROCEDURE SP_CrearPedidoBasico
-    @id_cliente INT,
-    @id_producto1 INT = NULL, @cantidad1 INT = NULL,
-    @id_producto2 INT = NULL, @cantidad2 INT = NULL
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    
-    INSERT INTO Pedido (id_cliente, estado) 
-    VALUES (@id_cliente, 'Pendiente');
-    
-    DECLARE @nuevo_pedido INT = SCOPE_IDENTITY();
-    
-    IF @id_producto1 IS NOT NULL
-        INSERT INTO DetalleDelPedido (id_pedido, id_producto, cantidad, precio_unitario)
-        SELECT @nuevo_pedido, @id_producto1, @cantidad1, precio
-        FROM Producto WHERE id_producto = @id_producto1;
-    
-    IF @id_producto2 IS NOT NULL
-        INSERT INTO DetalleDelPedido (id_pedido, id_producto, cantidad, precio_unitario)
-        SELECT @nuevo_pedido, @id_producto2, @cantidad2, precio
-        FROM Producto WHERE id_producto = @id_producto2;
-    
-    COMMIT TRANSACTION;
-    SELECT 'Pedido ' + CAST(@nuevo_pedido AS VARCHAR(10)) + ' creado' as resultado;
-END;
-GO
+----------------------------------------------------------------------------------------------------------------------------------
 
 -- Procedure para cambiar estado de pedido
 CREATE PROCEDURE SP_CambiarEstadoPedido
@@ -128,21 +101,16 @@ BEGIN
 END;
 GO
 
---Procedure para buscar clientes por ciudad
-CREATE PROCEDURE SP_BuscarClientesPorCiudad
-    @ciudad NVARCHAR(100) = NULL
-AS
-BEGIN
-    SELECT 
-        id_cliente,
-        nombre + ' ' + apellido as nombre_completo,
-        email,
-        telefono,
-        ciudad
-    FROM Cliente
-    WHERE (@ciudad IS NULL OR ciudad = @ciudad)
-    ORDER BY nombre, apellido;
-END;
+SELECT 
+    id_pedido,
+    id_cliente,
+    estado,
+    fecha_pedido
+FROM Pedido 
+ORDER BY id_pedido;
+GO
+
+EXEC SP_CambiarEstadoPedido 5, 'Procesando';
 GO
 
 --Procedure para reponer stock
@@ -159,6 +127,21 @@ BEGIN
     SELECT 'Stock actualizado: ' + CAST(@cantidad AS VARCHAR(10)) + ' unidades agregadas' as resultado;
 END;
 GO
+
+SELECT 
+    p.id_producto,
+    p.nombre,
+    s.cantidad as stock_actual,
+    s.fecha_actualizacion
+FROM Producto p
+INNER JOIN Stock s ON p.id_producto = s.id_producto
+WHERE p.id_producto = 1;
+GO
+
+EXEC SP_ReponerStock @id_producto = 1, @cantidad = 5;
+GO
+
+-----------------------------------------------------------------------------------------------------------------------------------------
 
 -- Procedimiento para actualizar el precio de algun producto
 CREATE PROCEDURE ActualizaPrecioDeProducto

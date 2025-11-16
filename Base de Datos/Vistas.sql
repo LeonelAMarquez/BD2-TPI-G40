@@ -34,7 +34,9 @@ GROUP BY
     p.fecha_pedido;
 GO
 
---Vista de inventario con información completa
+----------------------------------------------------------------------------------------------------------------------------------
+
+--Vista de inventario con informacion completa
 CREATE VIEW VW_InventarioCompleto AS
 SELECT 
     p.id_producto,
@@ -55,23 +57,20 @@ INNER JOIN Stock s ON p.id_producto = s.id_producto
 INNER JOIN Proveedor prov ON p.id_proveedor = prov.id_proveedor;
 GO
 
---Vista de pedidos con informacion completa
-CREATE VIEW VW_PedidosCompletos AS
-SELECT 
-    ped.id_pedido,
-    c.nombre + ' ' + c.apellido as cliente,
-    c.ciudad,
-    ped.fecha_pedido,
-    ped.estado,
-    ped.total,
-    pag.metodo_pago,
-    pag.monto as monto_pagado,
-    log.empresa_transporte,
-    log.estado_envio
-FROM Pedido ped
-INNER JOIN Cliente c ON ped.id_cliente = c.id_cliente
-LEFT JOIN Pagos pag ON ped.id_pedido = pag.id_pedido
-LEFT JOIN Logistica log ON ped.id_pedido = log.id_pedido;
+--Ver inventario completo
+SELECT * FROM VW_InventarioCompleto
+ORDER BY id_producto;
+GO
+
+--Ver inventario con bajo stock
+SELECT * FROM VW_InventarioCompleto
+WHERE estado_stock = 'Stock Bajo'
+ORDER BY cantidad ASC;
+GO
+
+--Ver inventario de productos sin stock
+SELECT * FROM VW_InventarioCompleto
+WHERE estado_stock = 'Sin Stock';
 GO
 
 --Vista de ventas por producto
@@ -91,12 +90,7 @@ WHERE ped.estado != 'Cancelado'
 GROUP BY p.id_producto, p.nombre, prov.nombre_proveedor;
 GO
 
-CREATE TYPE DetallePedidoType AS TABLE (
-    id_producto INT,
-    cantidad INT,
-    precio_unitario DECIMAL(10,2)
-);
-GO
+--------------------------------------------------------------------------------------------------------------------------------
 
 -- Muestra a los clientes deudores
 CREATE VIEW ClientesConDeuda AS

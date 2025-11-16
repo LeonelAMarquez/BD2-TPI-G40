@@ -216,3 +216,28 @@ SET total = (
     WHERE DP.id_pedido = P.id_pedido
 )
 FROM Pedido P;
+
+-- Inserte productos sin stock y con stock bajo para pruebas (Leo)
+INSERT INTO Producto (nombre, descripcion, precio, id_proveedor) 
+VALUES 
+('Fanta 1L', 'Gaseosa sabor naranja 1 litro', 125.0, 1),
+('Cerveza Patagonia Amber 1L', 'Cerveza artesanal amber', 280.0, 2),
+('Agua con gas 1L', 'Agua mineral con gas', 100.0, 3);
+
+INSERT INTO Stock (id_producto, cantidad) 
+VALUES 
+(16, 0), 
+(17, 0),  
+(18, 0);  
+
+INSERT INTO Producto (nombre, descripcion, precio, id_proveedor) 
+VALUES 
+('Cerveza Imperial 1L', 'Cerveza premium importada', 320.0, 4),
+('Monster Energy 500ml', 'Bebida energética', 380.0, 5),
+('Agua saborizada 1L', 'Agua con sabor a limón', 110.0, 3);
+
+INSERT INTO Stock (id_producto, cantidad) 
+VALUES 
+(19, 3),  
+(20, 7),   
+(21, 2);   

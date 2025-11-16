@@ -1,7 +1,7 @@
 ﻿USE SistemaPedidos
 GO
 
---Trigger para actualizar stock automáticamente
+--Trigger para actualizar stock automaticamente
 CREATE TRIGGER TR_ActualizarStock
 ON DetalleDelPedido
 AFTER INSERT
@@ -13,6 +13,20 @@ BEGIN
     FROM Stock s
     INNER JOIN inserted i ON s.id_producto = i.id_producto;
 END;
+GO
+
+SELECT 
+    p.id_producto,
+    p.nombre,
+    s.cantidad as stock_actual,
+    s.fecha_actualizacion
+FROM Producto p
+INNER JOIN Stock s ON p.id_producto = s.id_producto
+WHERE p.id_producto = 1;
+GO
+
+INSERT INTO DetalleDelPedido (id_pedido, id_producto, cantidad, precio_unitario)
+VALUES (4, 1, 5, 120.5); 
 GO
 
 --Trigger para validar stock antes de un pedido
@@ -36,6 +50,46 @@ BEGIN
     FROM inserted;
 END;
 GO
+
+SELECT 
+    p.id_producto,
+    p.nombre,
+    s.cantidad as stock_actual
+FROM Producto p
+INNER JOIN Stock s ON p.id_producto = s.id_producto
+WHERE p.id_producto IN (1, 2, 15)
+ORDER BY p.id_producto;
+GO
+
+BEGIN TRY
+    INSERT INTO DetalleDelPedido (id_pedido, id_producto, cantidad, precio_unitario)
+    VALUES (1, 1, 200, 120.5); 
+    
+    SELECT 'Inserción exitosa' as resultado;
+END TRY
+BEGIN CATCH
+    SELECT 
+        'Error: ' + ERROR_MESSAGE() as resultado
+END CATCH;
+GO
+
+INSERT INTO Pedido (id_cliente, estado) VALUES (7, 'Pendiente');
+DECLARE @pedido_prueba INT = SCOPE_IDENTITY();
+
+BEGIN TRY
+    INSERT INTO DetalleDelPedido (id_pedido, id_producto, cantidad, precio_unitario)
+    VALUES (@pedido_prueba, 2, 5, 118.0); 
+    
+    SELECT 'Insercion exitosa - Stock suficiente' as resultado;
+    
+    SELECT * FROM DetalleDelPedido WHERE id_pedido = @pedido_prueba;
+END TRY
+BEGIN CATCH
+    SELECT 'Error: ' + ERROR_MESSAGE() as resultado;
+END CATCH;
+GO
+
+------------------------------------------------------------------------------------------------------------
 
 -- Trigger que alerta cuando hay un stock bajo del producto
 CREATE TRIGGER AlertarBajoStock
