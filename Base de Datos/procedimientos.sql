@@ -161,11 +161,18 @@ END;
 GO
 
 -- Procedimiento para actualizar el precio de algun producto
-CREATE PROCEDURE ActualizarPrecioProducto
+CREATE PROCEDURE ActualizaPrecioDeProducto
     @id_producto INT,
     @nuevo_precio DECIMAL(10,2)
 AS
 BEGIN
+    
+    IF NOT EXISTS (SELECT 1 FROM Producto WHERE id_producto = @id_producto)
+    BEGIN
+        RAISERROR('El producto no existe.', 16, 1);
+        RETURN;
+    END
+    
     IF @nuevo_precio <= 0
     BEGIN
         RAISERROR('El precio debe ser mayor a cero.', 16, 1);
@@ -180,20 +187,33 @@ BEGIN
 END;
 GO
 
--- Procedimiento para registrar el envio de un producto
-CREATE PROCEDURE RegistrarEnvio
+-- Procedimiento para actualizar el estado de un pedido
+CREATE PROCEDURE ActualizarEstadoPedido
     @id_pedido INT,
     @empresa NVARCHAR(100),
-    @numero_guia NVARCHAR(50)
+    @numero_guia NVARCHAR(50),
+    @estado NVARCHAR(50)
 AS
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Pedido WHERE id_pedido = @id_pedido)
+    BEGIN
+        RAISERROR('El pedido ingresado no existe.', 16, 1);
+        RETURN;
+    END
+
+    IF @estado NOT IN ('Devuelto', 'Entregado', 'Enviado', 'En Proceso')
+    BEGIN
+        RAISERROR('Estado inválido. Debe ser: Devuelto, Entregado, Enviado o En Proceso.', 16, 1);
+        RETURN;
+    END
+    
     INSERT INTO Logistica (id_pedido, empresa_transporte, numero_guia, estado_envio, fecha_envio)
-    VALUES (@id_pedido, @empresa, @numero_guia, 'Enviado', GETDATE());
+    VALUES (@id_pedido, @empresa, @numero_guia, @estado, GETDATE());
 
     UPDATE Pedido
-    SET estado = 'Enviado'
+    SET estado = @estado
     WHERE id_pedido = @id_pedido;
 
-    SELECT 'Envio registrado y pedido marcado como Enviado.' AS mensaje;
+    SELECT 'Estado del pedido modificado.' AS mensaje;
 END;
 GO

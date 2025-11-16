@@ -1,7 +1,7 @@
 USE SistemaPedidos
 GO
 
-CREATE VIEW vw_ResumenGeneralPedidos AS
+CREATE VIEW ResumenGeneralPedidos AS
 SELECT 
     p.id_pedido AS CodigoPedido,
     CONCAT(c.nombre, ' ', c.apellido) AS NombreCompletoCliente,
@@ -75,7 +75,7 @@ LEFT JOIN Logistica log ON ped.id_pedido = log.id_pedido;
 GO
 
 --Vista de ventas por producto
-CREATE VIEW VW_VentasPorProducto AS
+CREATE VIEW VentasPorProducto AS
 SELECT 
     p.id_producto,
     p.nombre,
@@ -146,7 +146,7 @@ GROUP BY C.ciudad;
 go
 
 --vista de productos sin movimiento
-CREATE VIEW vw_ProductosSinMovimiento
+CREATE VIEW ProductosSinMovimiento
 AS
 SELECT
     P.id_producto,
