@@ -35,8 +35,8 @@ GROUP BY
 GO
 
 ----------------------------------------------------------------------------------------------------------------------------------
-
 --Vista de inventario con informacion completa
+
 CREATE VIEW VW_InventarioCompleto AS
 SELECT 
     p.id_producto,

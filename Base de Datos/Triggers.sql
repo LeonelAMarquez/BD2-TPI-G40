@@ -2,6 +2,7 @@
 GO
 
 --Trigger para actualizar stock automaticamente
+
 CREATE TRIGGER TR_ActualizarStock
 ON DetalleDelPedido
 AFTER INSERT
