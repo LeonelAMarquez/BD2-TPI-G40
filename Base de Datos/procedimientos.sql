@@ -169,34 +169,3 @@ BEGIN
     SELECT 'Precio actualizado correctamente.' AS mensaje;
 END;
 GO
-
--- Procedimiento para actualizar el estado de un pedido
-CREATE PROCEDURE ActualizarEstadoPedido
-    @id_pedido INT,
-    @empresa NVARCHAR(100),
-    @numero_guia NVARCHAR(50),
-    @estado NVARCHAR(50)
-AS
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Pedido WHERE id_pedido = @id_pedido)
-    BEGIN
-        RAISERROR('El pedido ingresado no existe.', 16, 1);
-        RETURN;
-    END
-
-    IF @estado NOT IN ('Devuelto', 'Entregado', 'Enviado', 'En Proceso')
-    BEGIN
-        RAISERROR('Estado inválido. Debe ser: Devuelto, Entregado, Enviado o En Proceso.', 16, 1);
-        RETURN;
-    END
-    
-    INSERT INTO Logistica (id_pedido, empresa_transporte, numero_guia, estado_envio, fecha_envio)
-    VALUES (@id_pedido, @empresa, @numero_guia, @estado, GETDATE());
-
-    UPDATE Pedido
-    SET estado = @estado
-    WHERE id_pedido = @id_pedido;
-
-    SELECT 'Estado del pedido modificado.' AS mensaje;
-END;
-GO
